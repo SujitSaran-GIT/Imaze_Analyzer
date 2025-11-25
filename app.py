@@ -6,13 +6,34 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables (for local development)
 load_dotenv()
 
+# Get API key from multiple sources
+def get_api_key():
+    # Try Streamlit secrets first (for deployment)
+    try:
+        if hasattr(st, 'secrets') and 'GOOGLE_API_KEY' in st.secrets:
+            return st.secrets['GOOGLE_API_KEY']
+    except:
+        pass
+
+    # Try environment variables (for local development)
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if api_key:
+        return api_key
+
+    # Return None if not found
+    return None
+
 # Configure API key
-API_KEY = os.getenv("GOOGLE_API_KEY")
+API_KEY = get_api_key()
 if not API_KEY:
-    st.error("❌ Please set GOOGLE_API_KEY in your .env file")
+    st.error("❌ API Key not found! Please set GOOGLE_API_KEY in:")
+    st.markdown("""
+    - **Local development**: Set in `.env` file or `.streamlit/secrets.toml`
+    - **Streamlit Cloud**: Set in Secrets section of your app settings
+    """)
     st.stop()
 genai.configure(api_key=API_KEY)
 
